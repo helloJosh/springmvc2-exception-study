@@ -183,6 +183,10 @@ server.error.include-binding-errors=never //errors 포함 여부
 # 2. API 예외 처리
 ***
 ### 1.1. API 예외 처리 - 시작
+* HTML 페이지의 경우는 오류페이지만 있으면 대부분의 문제는 해결할 수 있다.
+* 그에 반해 API의 경우에는 오류 상황에 맞는 오류 응답 스팩을 정하고, JSON으로 데이터를 내려주어야한다.
+* `@RestController`를 붙이면 결과는 JSON으로 보내지지만, 오류는 오류페이지로 자동 포워딩 된다.
+* 
 
 
 
