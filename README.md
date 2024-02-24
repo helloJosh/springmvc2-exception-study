@@ -334,3 +334,51 @@ public class UserHandlerExceptionResolver implements HandlerExceptionResolver {
 ##### ExceptionResolver 정리
 * 서블릿 컨테이너까지 예외가 올라가면 복잡하고 지저분하게 추가 프로세스가 실행된다. 반면에 `ExceptionResolver` 를 사용하면 예외처리가 상당히 깔끔해진다.
 * 그런데 직접 `ExceptionResolver` 를 구현하려고 하니 상당히 복잡하다. 지금부터 스프링이 제공하는 `ExceptionResolver` 들을 알아보자.
+
+
+### 2.6. API 예외처리 - 스프링이 제공하는 ExceptionResolver1
+##### 스프링 부트가 기본으로 제공하는 ExceptionResolver, 다음순서로 등록한다.
+1. `ExceptionHandlerExceptionResolver`
+2. `ResponseStatusExceptionResolver`
+3. `DefaultHandlerExceptionResolver` -> 우선순위가 가장 낮다.
+
+##### ExceptioinHandlerExceptionResolver
+* `@ExceptionHandler`을 처리한다.
+* API 예외 처리는 대부분 이기능으로 해결한다.
+
+##### ResponseStatusExceptionResolver
+* HTTP 상태코드를 지정해준다.
+> 예) `@ResponseStatus(value=HttpStatus.NOT_FOUND)`
+
+##### DefaultHandlerExceptionResolver
+* 스프링 내부 기본예외를 처리한다.
+
+### 2.7. ResponseStatusExceptionResolver
+* 예외에 따라서 HTTP 상태코드를 지정해주는 역할을 한다.
+* 다음 두가지 경우를 처리한다.
+  + `@ResponseStatus`가 달려있는 예외
+  + `ResponseStatusException` 예외
+#### 2.7.1. @ResponseStatus
+##### 예)
+```java
+@ResponseStatus(code = HttpStatus.BAD_REQUEST, reason = "잘못된 요청 오류")
+public class BadRequestException extends RuntimeException {
+}
+```
+* `BadRequestException` 예외가 컨트롤러 밖으로 넘어가면 `ResponseStatusExceptionResolver` 예외가 해당 애노테이션을 확인해서 오류 코드를 `HttpStatus.BAD_REQUEST` (400)으로 변경하고, 메시지도 담는다.
+* `ResponseStatusExceptionResolver` 코드를 확인해보면 결국 `response.sendError(statusCode,resolvedReason)` 를 호출하는 것을 확인할 수 있다.
+* `sendError(400)` 를 호출했기 때문에 WAS에서 다시 오류 페이지( `/error` )를 내부 요청한다.
+* `reason` 을 `MessageSource` 에서 찾는 기능도 제공한다. `reason = "error.bad"`
+
+#### 2.7.2. ReponseStatusException
+* `@ResponseStauts`는 개발자가 직접 변경할수 없는 예외에는 적용할 수 없다.
+* 애노테이션을 사용하기 때문에 동적으로 변경할 수 없다.
+* 이때 `ReponseStatusException`을 사용한다.
+
+##### 예)
+```java
+@GetMapping("/api/response-status-ex2")
+public String responseStatusEx2() {
+  throw new ResponseStatusException(HttpStatus.NOT_FOUND, "error.bad", newIllegalArgumentException());
+}
+```
